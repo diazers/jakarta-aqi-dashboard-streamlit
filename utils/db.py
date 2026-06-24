@@ -72,13 +72,14 @@ def get_conn():
     return st.connection(
         "postgresql",
         type="sql",
-        dialect=os.getenv("connections_postgresql_dialect", "postgresql"),
+        dialect="postgresql+psycopg2",  # <-- put it here
         host=os.getenv("connections_postgresql_host"),
         port=os.getenv("connections_postgresql_port", "5432"),
         database=os.getenv("connections_postgresql_database"),
         username=os.getenv("connections_postgresql_username"),
         password=os.getenv("connections_postgresql_password"),
     )
+
 
 
 # #check connection

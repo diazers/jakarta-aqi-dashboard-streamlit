@@ -99,11 +99,12 @@ def get_latest_by_source(source: str) -> pd.DataFrame:
         SELECT DISTINCT ON (station)
             timestamp_wib, station, aqi_pm25_us_epa,
             category, density_ugm3,
-            temperature_c, humidity_pct, wind_speed_kmh, pressure_mbar
+            temperature_c, humidity_pct, wind_speed_kmh, pressure_mbar,
+            measurement_time_ts
         FROM air_quality_pm25_combined
         WHERE source = '{source}'
           AND aqi_pm25_us_epa IS NOT NULL
-        ORDER BY station, timestamp_utc DESC
+        ORDER BY station, measurement_time_ts DESC
     """
     return get_conn().query(query)
 
@@ -143,7 +144,7 @@ def get_history_multi_station(stations: list, source: str, hours: int = 48) -> p
     station_list = "', '".join(stations)
     query = f"""
         SELECT
-            timestamp_wib, station, aqi_pm25_us_epa, density_ugm3
+            timestamp_wib, measurement_time_ts, station, aqi_pm25_us_epa, density_ugm3
         FROM air_quality_pm25_combined
         WHERE station IN ('{station_list}')
           AND source = '{source}'
@@ -194,7 +195,7 @@ def get_comparison_history(
     Returns long-format DataFrame with source column.
     """
     query = f"""
-        SELECT timestamp_wib, station, source, aqi_pm25_us_epa
+        SELECT timestamp_wib, measurement_time_ts, station, source, aqi_pm25_us_epa
         FROM air_quality_pm25_combined
         WHERE timestamp_utc >= NOW() - INTERVAL '{hours} hours'
           AND aqi_pm25_us_epa IS NOT NULL

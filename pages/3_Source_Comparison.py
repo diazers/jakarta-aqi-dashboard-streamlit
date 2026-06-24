@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import os
 import sys
+from datetime import datetime, timedelta
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.db import (
@@ -33,33 +34,68 @@ Disagreements between sources can indicate sensor drift, localized pollution, or
 
 st.divider()
 
+# ── Freshness Filter ──────────────────────────────────────────
+freshness_hours = st.selectbox(
+    "Show only stations updated within",
+    [1, 2, 3, 6, 12, 24],
+    index=1,
+    format_func=lambda x: f"Last {x} hour{'s' if x > 1 else ''}",
+)
+
+now    = datetime.now()
+cutoff = now - timedelta(hours=freshness_hours)
+
+st.divider()
+
 # ── Current Snapshot ──────────────────────────────────────────
 st.subheader("📸 Current Snapshot — All Sources Side by Side")
 
 col1, col2, col3 = st.columns(3)
 
-def render_source_table(source_key: str, label: str, color: str):
+def render_source_table(source_key: str, label: str):
     df = get_latest_by_source(source_key)
     st.markdown(f"#### {label}")
+
     if df.empty:
         st.info("No data available.")
         return
-    df = df[["station", "aqi_pm25_us_epa", "category", "density_ugm3"]].dropna(subset=["aqi_pm25_us_epa"])
-    df = df.sort_values("aqi_pm25_us_epa", ascending=False)
-    df.columns = ["Station", "AQI", "Category", "PM2.5 µg/m³"]
-    st.dataframe(df, hide_index=True, height=280)
-    avg = df["AQI"].mean()
-    st.metric("Network Average", f"{avg:.0f} AQI",
-              delta=df.loc[df["AQI"].idxmax(), "Station"],
-              delta_color="inverse",
-              help="Worst station shown as delta")
+
+    # Apply freshness filter
+    df["ts_dt"] = pd.to_datetime(df["timestamp_wib"])
+    df = df[df["ts_dt"] >= pd.Timestamp(cutoff)]
+
+    if df.empty:
+        st.info(f"No stations updated within last {freshness_hours}h.")
+        return
+
+    df = df.dropna(subset=["aqi_pm25_us_epa"]).sort_values("aqi_pm25_us_epa", ascending=False)
+
+    # Format timestamp_wib for display — show only HH:MM
+    df["Updated (WIB)"] = pd.to_datetime(df["timestamp_wib"]).dt.strftime("%Y-%m-%d %H:%M")
+
+    # Build display dataframe
+    display_df = df[["station", "aqi_pm25_us_epa", "category", "density_ugm3", "Updated (WIB)"]].copy()
+    display_df.columns = ["Station", "AQI", "Category", "PM2.5 µg/m³", "Updated (WIB)"]
+
+    st.dataframe(display_df, hide_index=True, height=300)
+
+    avg = df["aqi_pm25_us_epa"].mean()
+    worst_station = df.loc[df["aqi_pm25_us_epa"].idxmax(), "station"]
+    st.metric(
+        "Network Average",
+        f"{avg:.0f} AQI",
+        delta=worst_station,
+        delta_color="inverse",
+        help="Worst station shown as delta"
+    )
+    st.caption(f"{len(df)} stations · updated within last {freshness_hours}h")
 
 with col1:
-    render_source_table("iqair_readings", "🔵 IQAir", "#4fc3f7")
+    render_source_table("iqair_readings", "🔵 IQAir")
 with col2:
-    render_source_table("aqicn_readings", "🟢 AQICN", "#66bb6a")
+    render_source_table("aqicn_readings", "🟢 AQICN")
 with col3:
-    render_source_table("udara_readings", "🟠 Udara Jakarta", "#ffa726")
+    render_source_table("udara_readings", "🟠 Udara Jakarta")
 
 st.divider()
 
@@ -71,8 +107,10 @@ col1, col2, col3, col4 = st.columns([2, 2, 2, 1])
 
 with col1:
     iqair_stations = get_station_list("iqair_readings")
-    iqair_sel = st.selectbox("IQAir station", iqair_stations,
-                              index=iqair_stations.index("Semanggi") if "Semanggi" in iqair_stations else 0)
+    iqair_sel = st.selectbox(
+        "IQAir station", iqair_stations,
+        index=iqair_stations.index("Semanggi") if "Semanggi" in iqair_stations else 0
+    )
 
 with col2:
     aqicn_stations = get_station_list("aqicn_readings")
@@ -80,14 +118,18 @@ with col2:
 
 with col3:
     udara_stations = get_station_list("udara_readings")
-    udara_sel = st.selectbox("Udara Jakarta station", udara_stations,
-                              index=udara_stations.index("DKJ01 Bundaran HI") if "DKJ01 Bundaran HI" in udara_stations else 0)
+    udara_sel = st.selectbox(
+        "Udara Jakarta station", udara_stations,
+        index=udara_stations.index("DKJ01 Bundaran HI") if "DKJ01 Bundaran HI" in udara_stations else 0
+    )
 
 with col4:
-    hours_sel = st.selectbox("Range", [24, 48, 72, 168], index=1,
-                              format_func=lambda x: f"{x}h")
+    hist_hours = st.selectbox(
+        "Range", [24, 48, 72, 168], index=1,
+        format_func=lambda x: f"{x}h"
+    )
 
-comp_df = get_comparison_history(iqair_sel, aqicn_sel, udara_sel, hours_sel)
+comp_df = get_comparison_history(iqair_sel, aqicn_sel, udara_sel, hist_hours)
 
 if not comp_df.empty:
     color_map = {
@@ -111,16 +153,17 @@ if not comp_df.empty:
             marker=dict(size=4),
         ))
 
-    # AQI threshold lines
     for level, color, label in [
         (50,  "#00e400", "Good"),
         (100, "#ffff00", "Moderate"),
         (150, "#ff7e00", "Sensitive"),
         (200, "#ff0000", "Unhealthy"),
     ]:
-        fig.add_hline(y=level, line_dash="dot", line_color=color,
-                      opacity=0.3, annotation_text=label,
-                      annotation_position="right")
+        fig.add_hline(
+            y=level, line_dash="dot", line_color=color,
+            opacity=0.3, annotation_text=label,
+            annotation_position="right"
+        )
 
     fig.update_layout(
         height=460,
@@ -131,7 +174,7 @@ if not comp_df.empty:
         yaxis=dict(gridcolor="#2a2a2a", title="AQI PM2.5 (US EPA)"),
         legend=dict(bgcolor="#1a1a2e"),
         hovermode="x unified",
-        title=f"Source Comparison — Last {hours_sel}h",
+        title=f"Source Comparison — Last {hist_hours}h",
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -145,6 +188,7 @@ if not comp_df.empty:
         values="aqi_pm25_us_epa",
         aggfunc="mean"
     )
+
     if pivot.shape[1] >= 2:
         pivot["spread"] = pivot.max(axis=1) - pivot.min(axis=1)
         pivot["agreement"] = pivot["spread"].apply(
@@ -152,21 +196,21 @@ if not comp_df.empty:
         )
         agree_counts = pivot["agreement"].value_counts()
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
+        c1, c2, c3 = st.columns(3)
+        with c1:
             st.metric("🟢 High Agreement", f"{agree_counts.get('High', 0)} hours",
                       help="Sources within 25 AQI of each other")
-        with col2:
+        with c2:
             st.metric("🟡 Medium Agreement", f"{agree_counts.get('Medium', 0)} hours",
-                      help="Sources within 25-50 AQI of each other")
-        with col3:
+                      help="Sources within 25–50 AQI of each other")
+        with c3:
             st.metric("🔴 Low Agreement", f"{agree_counts.get('Low', 0)} hours",
                       help="Sources differ by more than 50 AQI")
 
         fig_spread = px.area(
             pivot.reset_index(),
             x="timestamp_wib", y="spread",
-            labels={"spread": "AQI Spread (Max-Min)", "timestamp_wib": "Time (WIB)"},
+            labels={"spread": "AQI Spread (Max−Min)", "timestamp_wib": "Time (WIB)"},
             color_discrete_sequence=["#ff7e00"],
             height=250,
         )
@@ -177,6 +221,6 @@ if not comp_df.empty:
             yaxis=dict(gridcolor="#2a2a2a"),
         )
         st.plotly_chart(fig_spread, use_container_width=True)
-        st.caption("Lower spread = higher agreement between sources · Spikes indicate measurement discrepancies")
+        st.caption("Lower spread = higher agreement · Spikes = measurement discrepancies between sources")
 else:
     st.info("No overlapping data found for selected stations and time range.")

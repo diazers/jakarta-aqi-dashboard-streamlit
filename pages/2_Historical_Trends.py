@@ -66,12 +66,20 @@ if stations_sel:
         y_col = "density_ugm3" if show_pm25 else "aqi_pm25_us_epa"
         y_label = "PM2.5 µg/m³" if show_pm25 else "AQI (US EPA)"
 
+        # Ensure missing values are NaN
+        hist_df[y_col] = pd.to_numeric(hist_df[y_col], errors="coerce")
+
         fig_line = px.line(
-            hist_df, x="timestamp_wib", y=y_col,
+            hist_df, 
+            x="measurement_time_ts", y=y_col,
             color="station",
-            labels={y_col: y_label, "timestamp_wib": "Time (WIB)", "station": "Station"},
+            labels={y_col: y_label, "measurement_time_ts": "Time (WIB)", "station": "Station"},
             height=420,
         )
+        
+        # Break lines at missing values
+        fig_line.update_traces(connectgaps=False, mode="lines+markers")
+        
         # AQI threshold lines (only when showing AQI)
         if not show_pm25:
             for level, color, label in [
@@ -87,13 +95,13 @@ if stations_sel:
                     annotation_position="right",
                 )
         fig_line.update_layout(
+            hovermode="x unified",
             plot_bgcolor="#0e1117",
             paper_bgcolor="#0e1117",
             font_color="#f0f0f0",
             xaxis=dict(gridcolor="#2a2a2a"),
             yaxis=dict(gridcolor="#2a2a2a"),
-            legend=dict(bgcolor="#1a1a2e"),
-            hovermode="x unified",
+            legend=dict(bgcolor="#1a1a2e"), 
         )
         st.plotly_chart(fig_line, use_container_width=True)
     else:
@@ -127,7 +135,9 @@ if not avg_df.empty:
         mode="lines+markers",
         line=dict(color="#4fc3f7", width=2),
         marker=dict(size=4),
-        name=f"Avg AQI ({avg_df['station_count'].mean():.0f} stations)",
+        name="Avg AQI",
+        customdata=avg_df["station_count"],
+        hovertemplate="<b>Avg AQI: %{y}</b><br>Stations: %{customdata}<extra></extra>",
     ))
     fig_avg.update_layout(
         height=350,

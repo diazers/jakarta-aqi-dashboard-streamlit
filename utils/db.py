@@ -60,25 +60,40 @@ def aqi_category(aqi) -> str:
 # ─────────────────────────────────────────────
 # CONNECTION
 # ─────────────────────────────────────────────
-
-def get_conn():
-    return st.connection("postgresql", type="sql")
-
-
-#check connection
+# Version 1 in local run
+# def get_conn():
+    # return st.connection("postgresql", type="sql")
+    
+# Version 2 run in postit connect cloud
+import os
 import streamlit as st
 
-# Temporary debug check
-if "connections" in st.secrets and "postgresql" in st.secrets["connections"]:
-    st.write("✅ Secrets loaded:", {
-        "dialect": st.secrets["connections"]["postgresql"].get("dialect"),
-        "host": st.secrets["connections"]["postgresql"].get("host"),
-        "port": st.secrets["connections"]["postgresql"].get("port"),
-        "database": st.secrets["connections"]["postgresql"].get("database"),
-        "username": st.secrets["connections"]["postgresql"].get("username"),
-    })
-else:
-    st.error("❌ PostgreSQL secrets not found in environment")
+def get_conn():
+    return st.connection(
+        "postgresql",
+        type="sql",
+        dialect=os.getenv("connections_postgresql_dialect", "postgresql"),
+        host=os.getenv("connections_postgresql_host"),
+        port=os.getenv("connections_postgresql_port", "5432"),
+        database=os.getenv("connections_postgresql_database"),
+        username=os.getenv("connections_postgresql_username"),
+        password=os.getenv("connections_postgresql_password"),
+    )
+
+
+# #check connection
+# import streamlit as st
+# # Temporary debug check
+# if "connections" in st.secrets and "postgresql" in st.secrets["connections"]:
+    # st.write("✅ Secrets loaded:", {
+        # "dialect": st.secrets["connections"]["postgresql"].get("dialect"),
+        # "host": st.secrets["connections"]["postgresql"].get("host"),
+        # "port": st.secrets["connections"]["postgresql"].get("port"),
+        # "database": st.secrets["connections"]["postgresql"].get("database"),
+        # "username": st.secrets["connections"]["postgresql"].get("username"),
+    # })
+# else:
+    # st.error("❌ PostgreSQL secrets not found in environment")
 
 
 # ─────────────────────────────────────────────

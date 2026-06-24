@@ -65,6 +65,22 @@ def get_conn():
     return st.connection("postgresql", type="sql")
 
 
+#check connection
+import streamlit as st
+
+# Temporary debug check
+if "connections" in st.secrets and "postgresql" in st.secrets["connections"]:
+    st.write("✅ Secrets loaded:", {
+        "dialect": st.secrets["connections"]["postgresql"].get("dialect"),
+        "host": st.secrets["connections"]["postgresql"].get("host"),
+        "port": st.secrets["connections"]["postgresql"].get("port"),
+        "database": st.secrets["connections"]["postgresql"].get("database"),
+        "username": st.secrets["connections"]["postgresql"].get("username"),
+    })
+else:
+    st.error("❌ PostgreSQL secrets not found in environment")
+
+
 # ─────────────────────────────────────────────
 # LATEST DATA QUERIES
 # ─────────────────────────────────────────────

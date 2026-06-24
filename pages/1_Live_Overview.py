@@ -22,21 +22,25 @@ from utils.db import (
     get_latest_by_source, aqi_color, aqi_category
 )
 
-st.write(f"Cache check: {pd.Timestamp.now()}")
 st.set_page_config(page_title="Live Overview", page_icon="🗺️", layout="wide")
 
-st.title("🗺️ Live Overview")
-st.caption("Latest PM2.5 AQI readings from all active stations · Auto-refreshes every 10 minutes")
-
-# ── Add refresh button here ───────────────────────────────────
-col_title, col_refresh = st.columns([6, 1])
-with col_refresh:
-    if st.button("🔄 Refresh data"):
-        st.cache_data.clear()
-        st.rerun()
+# Automated Auto-Refresh Check (Every 15 minutes / 900 seconds)
+# This snippet uses an HTML meta-refresh injection to gently force a rerun every 15 mins
+# even if nobody is clicking anything.
+REFRESH_INTERVAL = 900 
+st.components.v1.html(
+    f"""
+    <script>
+        setTimeout(function(){{
+            window.parent.location.reload();
+        }}, {REFRESH_INTERVAL * 1000});
+    </script>
+    """,
+    height=0,
+)
 
 # ── Load Data ─────────────────────────────────────────────────
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=900)
 def load_stations():
     base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     #return pd.read_csv(os.path.join(base, "data", "stations.csv"))
@@ -60,9 +64,34 @@ def load_stations():
 
     return pd.DataFrame(rows, columns=["station_name", "lat", "lon", "province", "source"])
     
+@st.cache_data(ttl=900)
+def fetch_live_data():
+    data = get_latest_all_sources()
+    fetched_at = pd.Timestamp.now().strftime("%H:%M:%S")
+    return data, fetched_at
 
+@st.cache_data(ttl=900)
+def fetch_source_ranking(source_key):
+    return get_latest_by_source(source_key)
+
+# 4. FETCH THE DATA HERE (Crucial step: defines the variables)
 stations_geo = load_stations()
-latest_all   = get_latest_all_sources()
+latest_all, last_refresh_time = fetch_live_data()
+
+st.write(f"Cache check: {pd.Timestamp.now()}")
+st.title("🗺️ Live Overview")
+st.caption("Latest PM2.5 AQI readings from all active stations · Auto-refreshes every 15 minutes")
+
+# This will now stay static when users interact with map filters/sliders!
+st.markdown(f"⏱️ **Last automatic refresh:** `{last_refresh_time}`")
+
+# ── Add refresh button here ─────────────────────────────────── deactivate afraid of spam call request
+# col_title, col_refresh = st.columns([6, 1])
+# with col_refresh:
+    # if st.button("🔄 Refresh data"):
+        # st.cache_data.clear()
+        # st.rerun()
+
 
 # ── Map Controls ──────────────────────────────────────────────
 st.subheader("🗺️ Station Map")

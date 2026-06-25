@@ -67,7 +67,7 @@ def load_stations():
 @st.cache_data(ttl=900)
 def fetch_live_data():
     data = get_latest_all_sources()
-    fetched_at = pd.Timestamp.now().strftime("%H:%M:%S")
+    fetched_at = pd.Timestamp.now(tz="Asia/Jakarta").strftime("%H:%M:%S")
     return data, fetched_at
 
 @st.cache_data(ttl=900)
@@ -78,7 +78,7 @@ def fetch_source_ranking(source_key):
 stations_geo = load_stations()
 latest_all, last_refresh_time = fetch_live_data()
 
-st.write(f"Cache check: {pd.Timestamp.now()}")
+st.write(f"Cache check: {pd.Timestamp.now(tz='Asia/Jakarta').strftime('%Y-%m-%d %H:%M:%S')}")
 st.title("🗺️ Live Overview")
 st.caption("Latest PM2.5 AQI readings from all active stations · Auto-refreshes every 15 minutes")
 

@@ -15,6 +15,15 @@ import os
 import sys
 from datetime import datetime, timedelta
 import requests
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+import requests
+
+JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
+
+def local_now_naive() -> datetime:
+    """Current WIB wall-clock time, naive — matches how measurement_time_ts is stored."""
+    return datetime.now(JAKARTA_TZ).replace(tzinfo=None)
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.db import (
@@ -202,7 +211,7 @@ map_data = latest_all[latest_all["source"].isin(selected_sources)].copy()
 
 # ── Apply Freshness Filter ────────────────────────────────────
 if not map_data.empty:     
-    now = datetime.now()
+    now = local_now_naive()  #datetime.now()
     cutoff = now - timedelta(hours=freshness_hours)
     map_data["meas_time_dt"] = pd.to_datetime(map_data["measurement_time_ts"], utc=True).dt.tz_localize(None)
     map_data["is_fresh"] = map_data["meas_time_dt"] >= cutoff
@@ -456,7 +465,7 @@ def render_ranking(source_key: str):
         return
 
     # Apply freshness filter to rankings too
-    now    = datetime.now()
+    now    = local_now_naive #datetime.now()
     cutoff = now - timedelta(hours=freshness_hours)
     
     df["meas_dt"] = pd.to_datetime(df["measurement_time_ts"])

@@ -202,9 +202,9 @@ map_data = latest_all[latest_all["source"].isin(selected_sources)].copy()
 
 # ── Apply Freshness Filter ────────────────────────────────────
 if not map_data.empty:     
-    now = datetime.now()
+    now = datetime.utcnow()
     cutoff = now - timedelta(hours=freshness_hours)
-    map_data["meas_time_dt"] = pd.to_datetime(map_data["measurement_time_ts"])
+    map_data["meas_time_dt"] = pd.to_datetime(map_data["measurement_time_ts"]).dt.tz_localize(None)
     map_data["is_fresh"] = map_data["meas_time_dt"] >= cutoff
     stale_count = (~map_data["is_fresh"]).sum()
 

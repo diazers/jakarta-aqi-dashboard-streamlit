@@ -92,8 +92,10 @@ st.title("🗺️ Live Overview")
 st.caption("Latest PM2.5 AQI readings from all active stations · Auto-refreshes every 15 minutes")
 
 # This will now stay static when users interact with map filters/sliders!
+next_refresh_dt = datetime.strptime(last_refresh_time, "%H:%M:%S") + timedelta(seconds=REFRESH_INTERVAL)
+next_refresh_time = next_refresh_dt.strftime("%H:%M:%S")
+
 st.markdown(f"⏱️ **Last automatic refresh:** `{last_refresh_time}`")
-next_refresh_time = last_refresh_time + timedelta(seconds=REFRESH_INTERVAL)
 st.markdown(f"⏭️ **Next automatic refresh:** `{next_refresh_time}`")
 
 # ── Add refresh button here ─────────────────────────────────── deactivate afraid of spam call request

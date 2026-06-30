@@ -93,6 +93,8 @@ st.caption("Latest PM2.5 AQI readings from all active stations · Auto-refreshes
 
 # This will now stay static when users interact with map filters/sliders!
 st.markdown(f"⏱️ **Last automatic refresh:** `{last_refresh_time}`")
+next_refresh_time = last_refresh_time + timedelta(seconds=REFRESH_INTERVAL)
+st.markdown(f"⏭️ **Next automatic refresh:** `{next_refresh_time}`")
 
 # ── Add refresh button here ─────────────────────────────────── deactivate afraid of spam call request
 # col_title, col_refresh = st.columns([6, 1])

@@ -121,10 +121,32 @@ for level, color, label in [
     (100, "#ffff00", "Moderate"),
     (150, "#ff7e00", "Sensitive"),
 ]:
-    fig.add_hline(y=level, line_dash="dot", line_color=color,
-                  opacity=0.35, annotation_text=label,
-                  annotation_position="right")
-
+    fig.add_hline(
+        y=level,
+        line_dash="dot",
+        line_color=color,
+        opacity=0.35,
+        annotation_text=label,
+        annotation_position="left",
+        annotation_font=dict(color=color, size=10)
+        
+# Style y-axes to avoid crowding
+fig.update_yaxes(
+    title_text="AQI (US EPA)",
+    secondary_y=False,
+    gridcolor="#2a2a2a",
+    color="#f0f0f0",
+    ticklabelposition="outside left"   # push AQI labels outward
+)
+fig.update_yaxes(
+    title_text="PM2.5 µg/m³",
+    secondary_y=True,
+    color="#f0f0f0",
+    ticklabelposition="outside right", # push PM2.5 labels outward
+    showline=True,
+    linecolor="#f0f0f0"
+)
+        
 fig.update_layout(
     height=400,
     plot_bgcolor="#0e1117", paper_bgcolor="#0e1117",

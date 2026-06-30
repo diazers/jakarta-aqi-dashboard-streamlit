@@ -213,7 +213,7 @@ map_data = latest_all[latest_all["source"].isin(selected_sources)].copy()
 if not map_data.empty:     
     now = local_now_naive()  #datetime.now()
     cutoff = now - timedelta(hours=freshness_hours)
-    map_data["meas_time_dt"] = pd.to_datetime(map_data["measurement_time_ts"], utc=True).dt.tz_localize(None)
+    map_data["meas_time_dt"] = pd.to_datetime(map_data["measurement_time_ts"]) #, utc=True).dt.tz_localize(None)
     map_data["is_fresh"] = map_data["meas_time_dt"] >= cutoff
     stale_count = (~map_data["is_fresh"]).sum()
 

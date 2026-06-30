@@ -80,11 +80,11 @@ st.caption(f"Last reading: {latest['timestamp_wib']} WIB · Source: {source_labe
 
 st.divider()
 
-# ── Chart Control ─────────────────────────────────────────────
-chart_type = st.radio("Select Chart Type", ["Line Chart", "Histogram (Bar)"], horizontal=True)
-
 # ── AQI Time Series ───────────────────────────────────────────
 st.subheader("📉 AQI Over Time")
+
+# ── Chart Control ─────────────────────────────────────────────
+chart_type = st.radio("Select Chart Type", ["Line Chart", "Histogram (Bar)"], horizontal=True)
 
 fig_aqi = go.Figure()
 

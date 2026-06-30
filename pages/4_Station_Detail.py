@@ -129,7 +129,7 @@ for level, color, label in [
         line_color=color,
         opacity=0.35,
         annotation_text=label,
-        annotation_position="top left",
+        annotation_position="bottom left",
         annotation_font=dict(color=color, size=10)
     )
         

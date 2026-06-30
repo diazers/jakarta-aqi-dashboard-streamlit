@@ -94,12 +94,16 @@ if stations_sel:
                 (100, "#ffff00", "Moderate"),
                 (150, "#ff7e00", "Sensitive"),
                 (200, "#ff0000", "Unhealthy"),
+                (300, "#8e24aa", "Very Unhealthy"),
             ]:
                 fig_line.add_hline(
-                    y=level, line_dash="dot",
-                    line_color=color, opacity=0.4,
+                    y=level, 
+                    line_dash="dot",
+                    line_color=color, 
+                    opacity=0.4,
                     annotation_text=label,
-                    annotation_position="right",
+                    annotation_position="bottom left",
+                    annotation_font=dict(color=color, size=10)
                 )
         fig_line.update_layout(
             hovermode="x unified",
@@ -162,7 +166,15 @@ if not avg_df.empty:
         font_color="#f0f0f0",
         xaxis=dict(gridcolor="#2a2a2a", title="Time (WIB)"),
         yaxis=dict(gridcolor="#2a2a2a", title="AQI"),
-        legend=dict(bgcolor="#1a1a2e"),
+        legend=dict(
+                orientation="h",       
+                yanchor="top",
+                y=-0.25,                
+                xanchor="center",
+                x=0.5,
+                bgcolor="#1a1a2e",
+                font=dict(size=10),
+            ),
         hovermode="x unified",
     )
     st.plotly_chart(fig_avg, use_container_width=True)

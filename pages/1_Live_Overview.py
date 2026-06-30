@@ -465,7 +465,7 @@ def render_ranking(source_key: str):
         return
 
     # Apply freshness filter to rankings too
-    now    = local_now_naive #datetime.now()
+    now    = local_now_naive() #datetime.now()
     cutoff = now - timedelta(hours=freshness_hours)
     
     df["meas_dt"] = pd.to_datetime(df["measurement_time_ts"])

@@ -158,11 +158,16 @@ if not comp_df.empty:
         (100, "#ffff00", "Moderate"),
         (150, "#ff7e00", "Sensitive"),
         (200, "#ff0000", "Unhealthy"),
+        (300, "#8e24aa", "Very Unhealthy"),
     ]:
         fig.add_hline(
-            y=level, line_dash="dot", line_color=color,
-            opacity=0.3, annotation_text=label,
-            annotation_position="right"
+            y=level, 
+            line_dash="dot", 
+            line_color=color,
+            opacity=0.3, 
+            annotation_text=label,
+            annotation_position="top left",
+            annotation_font=dict(color=color, size=10)
         )
 
     fig.update_layout(

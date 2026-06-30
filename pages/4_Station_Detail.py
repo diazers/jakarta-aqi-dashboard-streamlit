@@ -129,6 +129,7 @@ for level, color, label in [
         annotation_text=label,
         annotation_position="left",
         annotation_font=dict(color=color, size=10)
+    )
         
 # Style y-axes to avoid crowding
 fig.update_yaxes(

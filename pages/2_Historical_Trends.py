@@ -74,7 +74,7 @@ if stations_sel:
 
         # --- let the user pick which labels to use ---
         #compact_legend = st.checkbox("Compact legend (for mobile)", value=False)
-        label_col = "station_short" if compact_legend else "station"
+        #label_col = "station_short" if compact_legend else "station"
 
         fig_line = px.line(
             hist_df, 

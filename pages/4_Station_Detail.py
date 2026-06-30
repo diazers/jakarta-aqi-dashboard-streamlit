@@ -130,7 +130,15 @@ fig.update_layout(
     plot_bgcolor="#0e1117", paper_bgcolor="#0e1117",
     font_color="#f0f0f0",
     xaxis=dict(gridcolor="#2a2a2a", title="Time (WIB)"),
-    legend=dict(bgcolor="#1a1a2e"),
+    legend=dict(
+                orientation="h",      
+                yanchor="top",
+                y=-0.25,                
+                xanchor="center",
+                x=0.5,
+                bgcolor="#1a1a2e",
+                font=dict(size=10),
+            ),
     hovermode="x unified",
 )
 st.plotly_chart(fig, use_container_width=True)

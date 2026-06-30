@@ -65,9 +65,16 @@ if stations_sel:
     if not hist_df.empty:
         y_col = "density_ugm3" if show_pm25 else "aqi_pm25_us_epa"
         y_label = "PM2.5 µg/m³" if show_pm25 else "AQI (US EPA)"
-
+        
         # Ensure missing values are NaN
         hist_df[y_col] = pd.to_numeric(hist_df[y_col], errors="coerce")
+        
+        # --- create the short-name c
+        hist_df["station_short"] = hist_df["station"].str.split(" - ").str[0]
+
+        # --- let the user pick which labels to use ---
+        compact_legend = st.checkbox("Compact legend (for mobile)", value=False)
+        label_col = "station_short" if compact_legend else "station"
 
         fig_line = px.line(
             hist_df, 
@@ -101,7 +108,16 @@ if stations_sel:
             font_color="#f0f0f0",
             xaxis=dict(gridcolor="#2a2a2a"),
             yaxis=dict(gridcolor="#2a2a2a"),
-            legend=dict(bgcolor="#1a1a2e"), 
+            legend=dict(
+                orientation="h",       # horizontal layout, wraps as needed
+                yanchor="top",
+                y=-0.25,                # push below the x-axis labels
+                xanchor="center",
+                x=0.5,
+                bgcolor="#1a1a2e",
+                font=dict(size=10),
+            ),
+            margin=dict(t=40, b=80, l=40, r=20),  # give the bottom legend room, reclaim right side
         )
         st.plotly_chart(fig_line, use_container_width=True)
     else:

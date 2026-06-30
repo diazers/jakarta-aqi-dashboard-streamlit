@@ -129,6 +129,7 @@ fig_aqi.update_yaxes(
         
 fig_aqi.update_layout(
     height=350,
+    margin=dict(t=15, b=40, l=0, r=0),
     plot_bgcolor="#0e1117", paper_bgcolor="#0e1117",
     font_color="#f0f0f0",
     xaxis=dict(gridcolor="#2a2a2a", title="Time (WIB)"),
@@ -168,6 +169,7 @@ fig_pm25.update_yaxes(
         
 fig_pm25.update_layout(
     height=350,
+    margin=dict(t=15, b=40, l=0, r=0),
     plot_bgcolor="#0e1117", paper_bgcolor="#0e1117",
     font_color="#f0f0f0",
     xaxis=dict(gridcolor="#2a2a2a", title="Time (WIB)"),

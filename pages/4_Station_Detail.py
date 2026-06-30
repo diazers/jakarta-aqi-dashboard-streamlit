@@ -80,39 +80,26 @@ st.caption(f"Last reading: {latest['timestamp_wib']} WIB · Source: {source_labe
 
 st.divider()
 
-# ── AQI + PM2.5 Time Series ───────────────────────────────────
-st.subheader("📉 AQI & PM2.5 Over Time")
+# ── Chart Control ─────────────────────────────────────────────
+chart_type = st.radio("Select Chart Type", ["Line Chart", "Histogram (Bar)"], horizontal=True)
 
-has_weather = df["temperature_c"].notna().any()
+# ── AQI Time Series ───────────────────────────────────────────
+st.subheader("📉 AQI Over Time")
 
-if has_weather:
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-    fig.add_trace(go.Scatter(
-        x=df["timestamp_wib"], y=df["aqi_pm25_us_epa"],
-        name="AQI (US EPA)",
-        line=dict(color="#4fc3f7", width=2),
-        fill="tozeroy", fillcolor="rgba(79,195,247,0.05)",
-    ), secondary_y=False)
-    fig.add_trace(go.Scatter(
-        x=df["timestamp_wib"], y=df["density_ugm3"],
-        name="PM2.5 µg/m³",
-        line=dict(color="#ffa726", width=2, dash="dot"),
-    ), secondary_y=True)
-    fig.update_yaxes(title_text="AQI (US EPA)", secondary_y=False,
-                     gridcolor="#2a2a2a", color="#f0f0f0")
-    fig.update_yaxes(title_text="PM2.5 µg/m³", secondary_y=True, color="#f0f0f0")
-else:
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
+fig_aqi = go.Figure()
+
+if chart_type == "Line Chart":
+    fig_aqi.add_trace(go.Scatter(
         x=df["timestamp_wib"], y=df["aqi_pm25_us_epa"],
         name="AQI (US EPA)",
         line=dict(color="#4fc3f7", width=2),
         fill="tozeroy", fillcolor="rgba(79,195,247,0.05)",
     ))
-    fig.add_trace(go.Scatter(
-        x=df["timestamp_wib"], y=df["density_ugm3"],
-        name="PM2.5 µg/m³",
-        line=dict(color="#ffa726", width=2, dash="dot"),
+else:
+    fig_aqi.add_trace(go.Bar(
+        x=df["timestamp_wib"], y=df["aqi_pm25_us_epa"],
+        name="AQI (US EPA)",
+        marker_color=[aqi_color(v) if pd.notna(v) else "#888888" for v in df["aqi_pm25_us_epa"]],
     ))
 
 # AQI threshold lines
@@ -123,7 +110,7 @@ for level, color, label in [
     (200, "#ff0000", "Unhealthy"),
     (300, "#8e24aa", "Very Unhealthy"),
 ]:
-    fig.add_hline(
+    fig_aqi.add_hline(
         y=level,
         line_dash="dot",
         line_color=color,
@@ -132,43 +119,66 @@ for level, color, label in [
         annotation_position="bottom left",
         annotation_font=dict(color=color, size=10)
     )
-        
-# Style y-axes to avoid crowding
-fig.update_yaxes(
+
+fig_aqi.update_yaxes(
     title_text="AQI (US EPA)",
-    secondary_y=False,
     gridcolor="#2a2a2a",
     color="#f0f0f0",
-    ticklabelposition="outside left"   # push AQI labels outward
+    ticklabelposition="outside left"
 )
-fig.update_yaxes(
+        
+fig_aqi.update_layout(
+    height=350,
+    plot_bgcolor="#0e1117", paper_bgcolor="#0e1117",
+    font_color="#f0f0f0",
+    xaxis=dict(gridcolor="#2a2a2a", title="Time (WIB)"),
+    showlegend=False,
+    hovermode="x unified",
+)
+st.plotly_chart(fig_aqi, use_container_width=True)
+
+
+# ── PM2.5 Time Series ─────────────────────────────────────────
+st.subheader("📉 PM2.5 Over Time")
+
+fig_pm25 = go.Figure()
+
+if chart_type == "Line Chart":
+    fig_pm25.add_trace(go.Scatter(
+        x=df["timestamp_wib"], y=df["density_ugm3"],
+        name="PM2.5 µg/m³",
+        line=dict(color="#ffa726", width=2, dash="dot"),
+    ))
+else:
+    fig_pm25.add_trace(go.Bar(
+        x=df["timestamp_wib"], y=df["density_ugm3"],
+        name="PM2.5 µg/m³",
+        # Color PM2.5 by its corresponding AQI tier color for visual consistency
+        marker_color=[aqi_color(v) if pd.notna(v) else "#888888" for v in df["aqi_pm25_us_epa"]],
+    ))
+
+fig_pm25.update_yaxes(
     title_text="PM2.5 µg/m³",
-    secondary_y=True,
+    gridcolor="#2a2a2a",
     color="#f0f0f0",
-    ticklabelposition="outside right", # push PM2.5 labels outward
+    ticklabelposition="outside left",
     showline=True,
     linecolor="#f0f0f0"
 )
         
-fig.update_layout(
-    height=400,
+fig_pm25.update_layout(
+    height=350,
     plot_bgcolor="#0e1117", paper_bgcolor="#0e1117",
     font_color="#f0f0f0",
     xaxis=dict(gridcolor="#2a2a2a", title="Time (WIB)"),
-    legend=dict(
-                orientation="h",      
-                yanchor="top",
-                y=-0.25,                
-                xanchor="center",
-                x=0.5,
-                bgcolor="#1a1a2e",
-                font=dict(size=10),
-            ),
+    showlegend=False,
     hovermode="x unified",
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig_pm25, use_container_width=True)
 
 # ── Weather (IQAir only) ──────────────────────────────────────
+has_weather = df["temperature_c"].notna().any()
+
 if has_weather:
     st.subheader("🌡️ Weather Conditions")
     w1, w2 = st.columns(2)

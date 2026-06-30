@@ -120,7 +120,7 @@ for level, color, label in [
     (50,  "#00e400", "Good"),
     (100, "#ffff00", "Moderate"),
     (150, "#ff7e00", "Sensitive"),
-    (200, "#ff0000"), "Unhealthy"),
+    (200, "#ff0000", "Unhealthy"),
 ]:
     fig.add_hline(
         y=level,

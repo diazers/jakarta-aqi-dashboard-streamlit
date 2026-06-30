@@ -70,10 +70,10 @@ if stations_sel:
         hist_df[y_col] = pd.to_numeric(hist_df[y_col], errors="coerce")
         
         # --- create the short-name c
-        hist_df["station_short"] = hist_df["station"].str.split(" - ").str[0]
+        #hist_df["station_short"] = hist_df["station"].str.split(" - ").str[0]
 
         # --- let the user pick which labels to use ---
-        compact_legend = st.checkbox("Compact legend (for mobile)", value=False)
+        #compact_legend = st.checkbox("Compact legend (for mobile)", value=False)
         label_col = "station_short" if compact_legend else "station"
 
         fig_line = px.line(

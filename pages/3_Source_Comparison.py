@@ -172,7 +172,14 @@ if not comp_df.empty:
         font_color="#f0f0f0",
         xaxis=dict(gridcolor="#2a2a2a", title="Time (WIB)"),
         yaxis=dict(gridcolor="#2a2a2a", title="AQI PM2.5 (US EPA)"),
-        legend=dict(bgcolor="#1a1a2e"),
+        legend=dict(orientation="h",       # horizontal layout, wraps as needed
+                yanchor="top",
+                y=-0.25,                # push below the x-axis labels
+                xanchor="center",
+                x=0.5,
+                bgcolor="#1a1a2e",
+                font=dict(size=10),
+                ),
         hovermode="x unified",
         title=f"Source Comparison — Last {hist_hours}h",
     )

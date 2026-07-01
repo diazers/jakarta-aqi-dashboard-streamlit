@@ -98,6 +98,15 @@ next_refresh_time = next_refresh_dt.strftime("%H:%M:%S")
 st.markdown(f"⏱️ **Last automatic refresh:** `{last_refresh_time}`")
 st.markdown(f"⏭️ **Next automatic refresh:** `{next_refresh_time}`")
 
+# ── Admin sidebar refresh ──────────────────────────────────────
+with st.sidebar:
+    st.divider()
+    admin_pass = st.text_input("🔑 Admin refresh key", type="password")
+    if admin_pass == "i-solemnly-swear-that-i-am-up-to-no-good":  # ← change this to your own password
+        if st.button("🔄 Force refresh cache"):
+            st.cache_data.clear()
+            st.rerun()
+
 # ── Add refresh button here ─────────────────────────────────── deactivate afraid of spam call request
 # col_title, col_refresh = st.columns([6, 1])
 # with col_refresh:

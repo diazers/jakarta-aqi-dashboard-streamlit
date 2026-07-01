@@ -101,7 +101,7 @@ st.markdown(f"⏭️ **Next automatic refresh:** `{next_refresh_time}`")
 # ── Admin sidebar refresh ──────────────────────────────────────
 with st.sidebar:
     st.divider()
-    admin_pass = st.text_input("🔑 Admin refresh key", type="password")
+    admin_pass = st.text_input("🔑🧙🗺️ Admin refresh key", type="password")
     if admin_pass == "i-solemnly-swear-that-i-am-up-to-no-good":  # ← change this to your own password
         if st.button("🔄 Force refresh cache"):
             st.cache_data.clear()

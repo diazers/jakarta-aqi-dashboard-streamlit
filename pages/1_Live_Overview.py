@@ -36,12 +36,20 @@ st.set_page_config(page_title="Live Overview", page_icon="🗺️", layout="wide
 # Automated Auto-Refresh Check (Every 15 minutes / 900 seconds)
 # This snippet uses an HTML meta-refresh injection to gently force a rerun every 15 mins
 # even if nobody is clicking anything.
-REFRESH_INTERVAL = 900 
+# ── Auto-refresh: clear cache via URL param ───────────────────
+params = st.query_params
+if params.get("autorefresh") == "1":
+    st.cache_data.clear()
+    st.query_params.clear()
+    st.rerun()
+
+# ── JS: reload with ?autorefresh=1 after 15 min ──────────────
 st.components.v1.html(
     f"""
     <script>
         setTimeout(function(){{
-            window.parent.location.reload();
+            var url = window.parent.location.href.split('?')[0];
+            window.parent.location.href = url + '?autorefresh=1';
         }}, {REFRESH_INTERVAL * 1000});
     </script>
     """,

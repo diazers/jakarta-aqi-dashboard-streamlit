@@ -13,17 +13,21 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os
 import sys
-from datetime import datetime, timedelta
-import requests
+import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import requests
+from streamlit_autorefresh import st_autorefresh
 
 JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 
 def local_now_naive() -> datetime:
     """Current WIB wall-clock time, naive — matches how measurement_time_ts is stored."""
     return datetime.now(JAKARTA_TZ).replace(tzinfo=None)
+    
+def get_time_bucket(interval_seconds=900):
+    """Changes value every interval_seconds on the universal clock."""
+    return int(time.time() // interval_seconds)
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.db import (
@@ -37,26 +41,10 @@ st.set_page_config(page_title="Live Overview", page_icon="🗺️", layout="wide
 # This snippet uses an HTML meta-refresh injection to gently force a rerun every 15 mins
 # even if nobody is clicking anything.
 # ── Auto-refresh: clear cache via URL param ───────────────────
-REFRESH_INTERVAL = 900
+REFRESH_INTERVAL = 900  # 15 minutes
 
-params = st.query_params
-if params.get("autorefresh") == "1":
-    st.cache_data.clear()
-    st.query_params.clear()
-    st.rerun()
-
-# ── JS: reload with ?autorefresh=1 after 15 min ──────────────
-st.components.v1.html(
-    f"""
-    <script>
-        setTimeout(function(){{
-            var url = window.parent.location.href.split('?')[0];
-            window.parent.location.href = url + '?autorefresh=1';
-        }}, {REFRESH_INTERVAL * 1000});
-    </script>
-    """,
-    height=0,
-)
+# ── Universal auto-refresh (independent of user actions) ──────
+st_autorefresh(interval=REFRESH_INTERVAL * 1000, key="auto_refresh")
 
 # ── Load Data ─────────────────────────────────────────────────
 @st.cache_data(ttl=900)
@@ -83,19 +71,19 @@ def load_stations():
 
     return pd.DataFrame(rows, columns=["station_name", "lat", "lon", "province", "source"])
     
-@st.cache_data(ttl=900)
-def fetch_live_data():
+@st.cache_data(ttl=REFRESH_INTERVAL)
+def fetch_live_data(time_bucket=None):  # time_bucket forces cache miss when clock ticks over
     data = get_latest_all_sources()
     fetched_at = pd.Timestamp.now(tz="Asia/Jakarta").strftime("%H:%M:%S")
     return data, fetched_at
 
-@st.cache_data(ttl=900)
+@st.cache_data(ttl=REFRESH_INTERVAL)
 def fetch_source_ranking(source_key):
     return get_latest_by_source(source_key)
 
 # 4. FETCH THE DATA HERE (Crucial step: defines the variables)
 stations_geo = load_stations()
-latest_all, last_refresh_time = fetch_live_data()
+latest_all, last_refresh_time = fetch_live_data(time_bucket=get_time_bucket(REFRESH_INTERVAL))
 
 st.write(f"Cache check: {pd.Timestamp.now(tz='Asia/Jakarta').strftime('%Y-%m-%d %H:%M:%S')}")
 st.title("🗺️ Live Overview")

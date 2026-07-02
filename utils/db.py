@@ -69,16 +69,21 @@ import os
 import streamlit as st
 
 def get_conn():
-    return st.connection(
-        "postgresql",
-        type="sql",
-        dialect="postgresql+psycopg2",  # <-- put it here
-        host=os.getenv("connections_postgresql_host"),
-        port=os.getenv("connections_postgresql_port", "5432"),
-        database=os.getenv("connections_postgresql_database"),
-        username=os.getenv("connections_postgresql_username"),
-        password=os.getenv("connections_postgresql_password"),
-    )
+    if os.getenv("connections_postgresql_host"):
+        # Posit Cloud / production — use environment variables
+        return st.connection(
+            "postgresql",
+            type="sql",
+            dialect="postgresql+psycopg2",
+            host=os.getenv("connections_postgresql_host"),
+            port=os.getenv("connections_postgresql_port", "5432"),
+            database=os.getenv("connections_postgresql_database"),
+            username=os.getenv("connections_postgresql_username"),
+            password=os.getenv("connections_postgresql_password"),
+        )
+    else:
+        # Local — use secrets.toml
+        return st.connection("postgresql", type="sql")
 
 
 

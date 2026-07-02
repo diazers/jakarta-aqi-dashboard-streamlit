@@ -37,6 +37,8 @@ st.set_page_config(page_title="Live Overview", page_icon="🗺️", layout="wide
 # This snippet uses an HTML meta-refresh injection to gently force a rerun every 15 mins
 # even if nobody is clicking anything.
 # ── Auto-refresh: clear cache via URL param ───────────────────
+REFRESH_INTERVAL = 900
+
 params = st.query_params
 if params.get("autorefresh") == "1":
     st.cache_data.clear()

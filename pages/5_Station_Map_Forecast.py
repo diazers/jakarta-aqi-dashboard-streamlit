@@ -290,6 +290,10 @@ station_forecast = forecasts[
 
 history = load_history(engine, clicked_station, source)
 
+if not history.empty and not station_forecast.empty:
+    latest_actual_ts = history["timestamp"].max()
+    station_forecast = station_forecast[station_forecast["timestamp"] > latest_actual_ts]
+
 fig, ax = plt.subplots(figsize=(10, 4))
 
 if not history.empty:
@@ -305,6 +309,11 @@ if not station_forecast.empty:
         color="darkorange", linewidth=2, label="Forecast (median)",
     )
     ax.axvline(station_forecast["timestamp"].min(), color="red", linestyle="--", linewidth=1)
+elif not history.empty:
+    st.caption(
+        "The latest forecast run for this station has fully elapsed. "
+        "A new run should refresh this within the next scheduled cycle."
+    )
 
 ax.set_ylabel("AQI PM2.5")
 ax.set_title(f"{clicked_station} ({source})")

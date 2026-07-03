@@ -35,14 +35,27 @@ st.title("Station Map — Click a station for its forecast")
 # Data loading
 # ---------------------------------------------------------------------------
 
-@st.cache_resource
+st.cache_resource
+def get_conn():
+    if os.getenv("connections_postgresql_host"):
+        # Posit Cloud / production — use environment variables
+        return st.connection(
+            "postgresql",
+            type="sql",
+            dialect="postgresql+psycopg2",
+            host=os.getenv("connections_postgresql_host"),
+            port=os.getenv("connections_postgresql_port", "5432"),
+            database=os.getenv("connections_postgresql_database"),
+            username=os.getenv("connections_postgresql_username"),
+            password=os.getenv("connections_postgresql_password"),
+        )
+    else:
+        # Local — use secrets.toml
+        return st.connection("postgresql", type="sql")
+ 
+ 
 def get_engine():
-    user = os.environ["PGUSER"]
-    pwd = os.environ["PGPASSWORD"]
-    host = os.environ["PGHOST"]
-    port = os.environ.get("PGPORT", "5432")
-    db = os.environ["PGDATABASE"]
-    return create_engine(f"postgresql+psycopg2://{user}:{pwd}@{host}:{port}/{db}")
+    return get_conn().engine
 
 
 @st.cache_data(ttl=300)

@@ -25,7 +25,7 @@ import streamlit as st
 from sqlalchemy import create_engine
 
 ID_SEP = "||"
-HISTORY_DAYS_TO_SHOW = 30
+HISTORY_DAYS_TO_SHOW = 2
  
 # Keep this in sync with scripts/run_forecast.py's TARGET_STATIONS -- this is
 # the same curated pilot list, used here to restrict the map to stations we
@@ -64,7 +64,7 @@ st.title("Station Map — Click a station for its forecast")
 # Data loading
 # ---------------------------------------------------------------------------
 
-st.cache_resource
+@st.cache_resource
 def get_conn():
     if os.getenv("connections_postgresql_host"):
         # Posit Cloud / production — use environment variables

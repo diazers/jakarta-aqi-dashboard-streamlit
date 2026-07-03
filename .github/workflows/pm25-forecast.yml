@@ -1,0 +1,33 @@
+name: PM2.5 Forecast
+
+on:
+  # Triggered externally by cronjob.org (POSTing to the GitHub API dispatch
+  # endpoint every 3 hours) rather than GitHub's own scheduler, for precise
+  # timing. Also usable as a manual "Run workflow" button in the Actions tab.
+  workflow_dispatch: {}
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-forecast.txt
+
+      - name: Run forecast script
+        env:
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+        run: python scripts/run_forecast.py

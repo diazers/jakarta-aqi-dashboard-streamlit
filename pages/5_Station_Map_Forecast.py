@@ -26,7 +26,36 @@ from sqlalchemy import create_engine
 
 ID_SEP = "||"
 HISTORY_DAYS_TO_SHOW = 30
-
+ 
+# Keep this in sync with scripts/run_forecast.py's TARGET_STATIONS -- this is
+# the same curated pilot list, used here to restrict the map to stations we
+# actually forecast for (everything else in stations.csv is out of scope and
+# would just show up permanently gray).
+TARGET_STATIONS = [
+    ("Kemayoran", "iqair_readings"),
+    ("Semanggi", "iqair_readings"),
+    ("Agung Sedayu Group - WTP Ebony (BGM)", "iqair_readings"),
+    ("pasir putih", "iqair_readings"),
+    ("Duitku PG, Kebon Jeruk", "iqair_readings"),
+    ("TANGKAS SPORTS CENTRE", "iqair_readings"),
+    ("Cilandak Barat", "iqair_readings"),
+    ("Kemang Timur V", "iqair_readings"),
+    ("Rambutan, Ciracas", "iqair_readings"),
+    ("Shinano, Jakarta Garden City", "iqair_readings"),
+    ("DKI01 Bundaran HI", "udara_readings"),
+    ("DKI02 Kelapa Gading", "udara_readings"),
+    ("DKI03 Jagakarsa", "udara_readings"),
+    ("DKI04 Lubang Buaya", "udara_readings"),
+    ("DKI05 Kebun Jeruk", "udara_readings"),
+    ("Jakarta GBK Gelora", "aqicn_readings"),
+    ("Kedoya Utara Nafas", "aqicn_readings"),
+    ("Kemayoran", "aqicn_readings"),
+    ("Krukut", "aqicn_readings"),
+    ("Pakubuwono 3 Nafas", "aqicn_readings"),
+    ("Pakubuwono Menteng", "aqicn_readings"),
+]
+TARGET_STATION_NAMES = {name for name, _source in TARGET_STATIONS}
+ 
 st.set_page_config(page_title="Station Map", layout="wide")
 st.title("Station Map — Click a station for its forecast")
 
@@ -162,14 +191,33 @@ def load_history(_engine, station: str, source: str) -> pd.DataFrame:
 
 engine = get_engine()
 stations = load_stations()
+ 
+# folium crashes on NaN coordinates -- drop and warn instead of failing the page
+missing_coords = stations[stations["lat"].isna() | stations["lon"].isna()]
+if not missing_coords.empty:
+    st.warning(
+        f"{len(missing_coords)} station(s) have missing lat/lon and won't be "
+        f"shown on the map: {missing_coords['station'].tolist()}"
+    )
+stations = stations.dropna(subset=["lat", "lon"])
+ 
+# Restrict the map to the curated pilot list only -- match on (station, source)
+# when source is available, otherwise fall back to station name alone.
+if has_source_col := ("source" in stations.columns):
+    target_pairs = set(TARGET_STATIONS)
+    in_target = stations.apply(
+        lambda r: (r["station"], r["source"]) in target_pairs, axis=1
+    )
+else:
+    in_target = stations["station"].isin(TARGET_STATION_NAMES)
+ 
+stations = stations[in_target]
 forecasts = load_latest_forecasts(engine)
-
+ 
 # which station+source combos are eligible (have a forecast this run)
 eligible_keys = set(
     (forecasts["station"] + ID_SEP + forecasts["source"]).unique()
 ) if not forecasts.empty else set()
-
-has_source_col = "source" in stations.columns
 
 
 # ---------------------------------------------------------------------------

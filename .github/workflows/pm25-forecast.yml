@@ -2,8 +2,7 @@ name: PM2.5 Forecast
 
 on:
   # Triggered externally by cronjob.org (POSTing to the GitHub API dispatch
-  # endpoint every 3 hours) rather than GitHub's own scheduler, for precise
-  # timing. Also usable as a manual "Run workflow" button in the Actions tab.
+  # trigger every 3 hours from cronjob
   workflow_dispatch: {}
 
 jobs:
@@ -19,6 +18,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: scripts/requirements-forecast.txt
 
       - name: Install dependencies
         run: pip install -r scripts/requirements-forecast.txt
@@ -30,4 +31,5 @@ jobs:
           PGHOST: ${{ secrets.PGHOST }}
           PGPORT: ${{ secrets.PGPORT }}
           PGDATABASE: ${{ secrets.PGDATABASE }}
+          TABPFN_TOKEN: ${{ secrets.TABPFN_TOKEN }}
         run: python scripts/run_forecast.py

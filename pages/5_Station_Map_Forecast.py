@@ -78,12 +78,33 @@ def load_stations() -> pd.DataFrame:
     if bad_rows:
         st.warning(
             f"Skipped {len(bad_rows)} malformed row(s) in stations.csv "
-            f"(wrong number of fields -- likely an unquoted comma in a station "
-            f"name or province). These stations won't appear on the map until "
-            f"fixed in the CSV: {bad_rows}"
+            f"(likely a station name containing an unquoted comma, e.g. "
+            f"'Rambutan, Ciracas'). These stations won't appear on the map "
+            f"until fixed in the CSV: {bad_rows}"
         )
 
     df.columns = [c.strip().lower() for c in df.columns]
+
+    rename_map = {}
+    if "latitude" in df.columns:
+        rename_map["latitude"] = "lat"
+    if "longitude" in df.columns:
+        rename_map["longitude"] = "lon"
+    if "station_name" in df.columns and "station" not in df.columns:
+        rename_map["station_name"] = "station"
+    elif "name" in df.columns and "station" not in df.columns:
+        rename_map["name"] = "station"
+    df = df.rename(columns=rename_map)
+    missing = {"station", "lat", "lon"} - set(df.columns)
+    if missing:
+        st.error(f"stations.csv is missing expected column(s): {missing}. "
+                  f"Found columns: {list(df.columns)}")
+        st.stop()
+
+    if "source" in df.columns:
+        df["source"] = df["source"].apply(normalize_source)
+
+    return df
 
 
 

@@ -6,3 +6,4 @@ sqlalchemy>=2.0.0
 streamlit-autorefresh
 streamlit-folium
 folium
+matplotlib

@@ -263,19 +263,19 @@ map_data = st_folium(m, height=520, use_container_width=True)
 # ---------------------------------------------------------------------------
 # Handle click -> resolve station (+ source if ambiguous) -> plot
 # ---------------------------------------------------------------------------
-
+ 
 clicked_name = map_data.get("last_object_clicked_tooltip") if map_data else None
 # tooltip may include "(source1/source2)" suffix -- strip it back to plain station name
 clicked_station = clicked_name.split(" (")[0] if clicked_name else None
-
+ 
 if not clicked_station:
     st.info("Click a station dot on the map to see its forecast.")
     st.stop()
-
+ 
 st.subheader(clicked_station)
-
+ 
 candidate_sources = sorted(forecasts.loc[forecasts["station"] == clicked_station, "source"].unique())
-
+ 
 if len(candidate_sources) == 0:
     st.warning("This station has no forecast from the latest run (not eligible this time).")
     st.stop()
@@ -283,22 +283,31 @@ elif len(candidate_sources) > 1:
     source = st.selectbox("Source", candidate_sources)
 else:
     source = candidate_sources[0]
-
+ 
 station_forecast = forecasts[
     (forecasts["station"] == clicked_station) & (forecasts["source"] == source)
 ].sort_values("timestamp")
-
+ 
 history = load_history(engine, clicked_station, source)
+ 
 
+# fix visually overlap and the chart looks like the forecast is stale/wrong,
 if not history.empty and not station_forecast.empty:
     latest_actual_ts = history["timestamp"].max()
+    forecast_is_tz_aware = pd.api.types.is_datetime64tz_dtype(station_forecast["timestamp"])
+    # DB driver can return one column tz-aware and the other tz-naive --
+    # normalize so the comparison below doesn't raise a TypeError
+    if forecast_is_tz_aware and latest_actual_ts.tzinfo is None:
+        latest_actual_ts = latest_actual_ts.tz_localize("UTC")
+    elif not forecast_is_tz_aware and latest_actual_ts.tzinfo is not None:
+        latest_actual_ts = latest_actual_ts.tz_localize(None)
     station_forecast = station_forecast[station_forecast["timestamp"] > latest_actual_ts]
-
+ 
 fig, ax = plt.subplots(figsize=(10, 4))
-
+ 
 if not history.empty:
     ax.plot(history["timestamp"], history["value"], color="tab:blue", label="Actual")
-
+ 
 if not station_forecast.empty:
     ax.fill_between(
         station_forecast["timestamp"], station_forecast["q30"], station_forecast["q70"],
@@ -310,17 +319,20 @@ if not station_forecast.empty:
     )
     ax.axvline(station_forecast["timestamp"].min(), color="red", linestyle="--", linewidth=1)
 elif not history.empty:
+    # forecast existed for this station but every point got clipped -- the
+    # most recent forecast run is now fully stale (>=3h old with no
+    # remaining future points), rather than there being no forecast at all
     st.caption(
         "The latest forecast run for this station has fully elapsed. "
         "A new run should refresh this within the next scheduled cycle."
     )
-
+ 
 ax.set_ylabel("AQI PM2.5")
 ax.set_title(f"{clicked_station} ({source})")
 ax.legend(loc="upper left")
 fig.autofmt_xdate()
-
+ 
 st.pyplot(fig)
-
+ 
 with st.expander("Latest forecast values"):
     st.dataframe(station_forecast[["timestamp", "q30", "q50", "q70"]], use_container_width=True)

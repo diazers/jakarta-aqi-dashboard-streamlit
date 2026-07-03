@@ -60,30 +60,31 @@ def get_engine():
 
 @st.cache_data(ttl=300)
 def load_stations() -> pd.DataFrame:
-    df = pd.read_csv("data/stations.csv")
+    bad_rows = []
+
+    def _on_bad_line(bad_line):
+        bad_rows.append(bad_line)
+        return None  # drop the row instead of raising
+
+    try:
+        df = pd.read_csv("data/stations.csv")
+    except pd.errors.ParserError:
+        df = pd.read_csv(
+            "data/stations.csv",
+            engine="python",
+            on_bad_lines=_on_bad_line,
+        )
+
+    if bad_rows:
+        st.warning(
+            f"Skipped {len(bad_rows)} malformed row(s) in stations.csv "
+            f"(wrong number of fields -- likely an unquoted comma in a station "
+            f"name or province). These stations won't appear on the map until "
+            f"fixed in the CSV: {bad_rows}"
+        )
+
     df.columns = [c.strip().lower() for c in df.columns]
-    # normalize expected column names -- adjust the .rename() mapping here
-    # if your CSV uses different headers
-    rename_map = {}
-    if "latitude" in df.columns:
-        rename_map["latitude"] = "lat"
-    if "longitude" in df.columns:
-        rename_map["longitude"] = "lon"
-    if "station_name" in df.columns and "station" not in df.columns:
-        rename_map["station_name"] = "station"
-    elif "name" in df.columns and "station" not in df.columns:
-        rename_map["name"] = "station"
-    df = df.rename(columns=rename_map)
-    missing = {"station", "lat", "lon"} - set(df.columns)
-    if missing:
-        st.error(f"stations.csv is missing expected column(s): {missing}. "
-                  f"Found columns: {list(df.columns)}")
-        st.stop()
 
-    if "source" in df.columns:
-        df["source"] = df["source"].apply(normalize_source)
-
-    return df
 
 
 def normalize_source(raw: str) -> str:

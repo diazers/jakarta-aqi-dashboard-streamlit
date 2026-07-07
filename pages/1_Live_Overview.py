@@ -44,7 +44,7 @@ st.set_page_config(page_title="Live Overview", page_icon="🗺️", layout="wide
 REFRESH_INTERVAL = 900  # 15 minutes
 
 # ── Universal auto-refresh (independent of user actions) ──────
-st_autorefresh(interval=REFRESH_INTERVAL * 1000, key="auto_refresh")
+st_autorefresh(interval=60000, key="auto_refresh")
 
 # ── Load Data ─────────────────────────────────────────────────
 @st.cache_data(ttl=900)

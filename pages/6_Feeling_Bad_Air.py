@@ -20,7 +20,51 @@ IMAGE_DIR = REPO_ROOT / "data" / "images"
 
 STATIONS = ["DKI1", "DKI2", "DKI3", "DKI4", "DKI5"]
 VIEWER_HEIGHT = 480  # px, height of the zoom/compare canvas
+
+NARRATION_1 = """
+## 1. Brief Summary
+
+**May 11–31, 2026 (Transition from Wet to Dry Season)**
+
+Across the five monitoring stations, a contrasting shift is visible in both air mass pathways (trajectories) and pollutant intensity (PM2.5 concentrations) based on the HYSPLIT-CWT analysis for Jakarta between late May and early June 2026.
+
+During the latter half of May, air masses primarily arrive from a wide, fan-like array of directions, including the South-Southeast, East-Northeast, and South-Southwest. The high-concentration "hotspot" (the red and orange core) remains tightly localized and concentrated directly over the Greater Jakarta area (including Jakarta, Depok, Bekasi, and parts of Bogor and Tangerang).
+
+Notably, May 2026 contains several long weekends and major public holidays — including Labour Day, the Ascension Day long weekend, Idul Adha, and the consecutive Waisak and Pancasila Day holidays spanning into June 1st. Increased mobility, tourism, and heavy traffic leaving and re-entering the capital during these periods caused sharp spikes in local emissions. This accumulation of local urban emissions alongside surrounding regional inputs serves as an early indicator that Jakarta's pollution stems from a combination of localized sources and transboundary air pollution.
+
+**June 1–14, 2026 (Establishment of the Dry Season)**
+
+In early June, the maximum CWT value surges drastically to 153.54 µg/m³, nearly doubling the peak observed in May.
+
+During this period, wind trajectories undergo a unified, distinct shift: all primary clusters originate exclusively from the East and East-Southeast. The high-concentration plume (represented by the dark red and brown contours) extends eastward in a wide corridor stretching over major industrial hubs, including Bekasi, Karawang, and Purwakarta. This provides further evidence of transboundary air pollution. Because the regional wind speeds are faster during this period, the air masses travel longer distances over a shorter timeframe, producing the elongated trajectories shown on the map.
+"""
+
+NARRATION_2 = """
+## 2. Monsoon Influence and Seasonal Wind Dynamics
+
+The sharp contrast between May and June is driven by the establishment of the Southeast (East) Monsoon, which marks the definitive onset of Indonesia's dry season.
+
+**Wind Direction Shift**
+
+In May, Jakarta experiences a transitional weather period (*pancaroba*). Wind directions are variable and unstable, causing the trajectory clusters to spread out in multiple directions. By June, the Southeast Monsoon stabilizes completely. Strong, persistent trade winds blow from the Australian continent across the Java Sea and the mainland of Java toward the northwest.
+
+**Wind Speed and Atmospheric Stagnation**
+
+While regional monsoonal winds are steady, the lower troposphere over western Java during June frequently experiences a lower Planetary Boundary Layer Height (PBLH) alongside nighttime surface wind stagnation. As air masses travel long distances from the east and southeast along Java's northern industrial corridor, they continuously accumulate industrial and vehicular pollution, eventually funnelling it directly into the Jakarta basin.
+"""
+
+NARRATION_3 = """
+## 3. The Rise of Pollutants (PM2.5)
+
+The rapid escalation of PM2.5 concentrations in June is a direct result of transboundary transport combining with highly unfavorable meteorological dispersion.
+
+- **Upwind Industrial Contributions:** As shown in the June map, the dominant air masses pass directly through the heavily industrialized zones east of Jakarta (Bekasi, Karawang, and Purwakarta). These areas host dense clusters of manufacturing plants, coal-fired power stations, and heavy commercial traffic corridor emissions.
+- **Lack of Wet Scavenging:** In May, residual rain events still wash out particulates from the atmosphere via precipitation scavenging. By June, rainfall drops significantly. Without rain to precipitate fine particles out of the air column, PM2.5 accumulates rapidly, leading to the prolonged, intense pollution episodes illustrated by the deep red 140–150 µg/m³ CWT contours.
+"""
 # ------------------------------------------------------------------------
+
+# Supporting figures referenced in the narration
+FIGURE_DIR = REPO_ROOT / "data" / "images" / "figures"
 
 station = st.selectbox("Select Station", STATIONS, index=0)
 
@@ -30,6 +74,23 @@ june_path = IMAGE_DIR / f"June_{station}.png"
 
 def _b64(path: Path) -> str:
     return base64.b64encode(path.read_bytes()).decode()
+
+
+def render_figure(path: Path, caption: str, height: int = 380) -> None:
+    """Render an image constrained to a fixed height box (object-fit: contain),
+    so figures with different native aspect ratios still display at a matched size."""
+    b64 = _b64(path)
+    st.markdown(
+        f"""
+        <div style="height:{height}px; display:flex; align-items:center; justify-content:center;
+                    background:#ffffff; border-radius:6px; overflow:hidden;">
+            <img src="data:image/png;base64,{b64}"
+                 style="max-width:100%; max-height:100%; object-fit:contain;" />
+        </div>
+        <div style="font-size:13px; color:#aaa; margin-top:6px;">{caption}</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 if may_path.exists() and june_path.exists():
@@ -257,13 +318,63 @@ if may_path.exists() and june_path.exists():
     """
 
     components.html(html_code, height=VIEWER_HEIGHT + 40, scrolling=False)
-    st.caption(f"Comparing {station}: May 11–31, 2026 vs June 1–14, 2026")
+    st.caption(f"Comparing {station}: May 1–31, 2026 vs June 1–14, 2026")
 else:
     missing = [p.name for p in (may_path, june_path) if not p.exists()]
     st.error(
         f"Missing image file(s): {', '.join(missing)}\n\n"
         f"Expected them at: `{IMAGE_DIR}`"
     )
+
+st.markdown("---")
+st.markdown(NARRATION_1)
+
+st.markdown(NARRATION_2)
+
+fig_monsoon = FIGURE_DIR / "monsoon_wind_map.png"
+fig_inversion = FIGURE_DIR / "inversion_diagram.png"
+
+fig2_col_1, fig2_col_2 = st.columns(2)
+with fig2_col_1:
+    if fig_monsoon.exists():
+        render_figure(
+            fig_monsoon,
+            caption="Seasonal wind reversal across Indonesia: winds and rainy/dry season "
+                    "timing flip between the Northwest and Southeast Monsoon, driving the "
+                    "May-to-June shift in air mass origin over Jakarta.",
+        )
+with fig2_col_2:
+    if fig_inversion.exists():
+        render_figure(
+            fig_inversion,
+            caption="Nighttime temperature inversion: cool air trapped beneath a warmer "
+                    "layer prevents vertical mixing, holding pollutants near the surface "
+                    "until the inversion breaks down.",
+        )
+
+st.markdown(NARRATION_3)
+
+fig_dispersion = FIGURE_DIR / "urban_dispersion_cfd.png"
+fig_deposition = FIGURE_DIR / "wet_deposition_washout.png"
+
+fig_col_1, fig_col_2 = st.columns(2)
+with fig_col_1:
+    if fig_dispersion.exists():
+        render_figure(
+            fig_dispersion,
+            caption="Simulated pollutant dispersion around an urban canopy, showing how "
+                    "tall buildings, rooftop shear layers, and low-rise canopy effects "
+                    "trap and channel pollutants near the source before they disperse "
+                    "downwind.",
+        )
+with fig_col_2:
+    if fig_deposition.exists():
+        render_figure(
+            fig_deposition,
+            caption="Illustration of wet deposition: rainfall washes fine and coarse "
+                    "particles out of the atmosphere and into waterways, a removal "
+                    "pathway that weakens sharply once rainfall drops in the dry season.",
+        )
 
 st.markdown("---")
 st.caption("Source: NOAA HYSPLIT + DLH Jakarta PM2.5")

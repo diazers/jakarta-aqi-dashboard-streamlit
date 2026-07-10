@@ -4,7 +4,7 @@ from streamlit_image_comparison import image_comparison
 
 st.set_page_config(page_title="Feeling Bad Air?", page_icon="🌫️", layout="wide")
 
-st.title("🌫️ Feeling Bad Air?")
+st.title("🏭️ Feeling Bad Air?")
 st.caption("Slide to compare pollutant transport patterns between May and June 2026")
 
 # ---- CONFIG ----------------------------------------------------------

@@ -375,6 +375,17 @@ with fig_col_2:
                     "particles out of the atmosphere and into waterways, a removal "
                     "pathway that weakens sharply once rainfall drops in the dry season.",
         )
+        
+st.markdown("---")
+st.markdown("### Sources")
+st.markdown(
+    """
+- [Inversion (meteorology) — Wikipedia](https://en.wikipedia.org/wiki/Inversion_(meteorology))
+- [SST Cooling in the Indonesian Seas — ResearchGate](https://www.researchgate.net/publication/228449553_SST_Cooling_in_the_Indonesian_Seas)
+- [Experiments in Fluids (2022) — Springer](https://link.springer.com/article/10.1007/s00348-022-03439-0)
+- [Chemosphere (2022) — ScienceDirect](https://www.sciencedirect.com/science/article/abs/pii/S0048969722006209)
+"""
+)
 
 st.markdown("---")
 st.caption("Source: NOAA HYSPLIT + DLH Jakarta PM2.5")

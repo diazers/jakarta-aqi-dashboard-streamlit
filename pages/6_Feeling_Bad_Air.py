@@ -19,7 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent  # pages/ -> repo root
 IMAGE_DIR = REPO_ROOT / "data" / "images"
 
 STATIONS = ["DKI1", "DKI2", "DKI3", "DKI4", "DKI5"]
-VIEWER_HEIGHT = 720  # px, height of the zoom/compare canvas
+VIEWER_HEIGHT = 480  # px, height of the zoom/compare canvas
 # ------------------------------------------------------------------------
 
 station = st.selectbox("Select Station", STATIONS, index=0)

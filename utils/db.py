@@ -106,7 +106,7 @@ def get_conn():
 # LATEST DATA QUERIES
 # ─────────────────────────────────────────────
 
-@st.cache_data(ttl=600)
+# @st.cache_data(ttl=600)
 def get_latest_all_sources() -> pd.DataFrame:
     """
     Latest AQI reading per station per source.
@@ -121,12 +121,12 @@ def get_latest_all_sources() -> pd.DataFrame:
         WHERE aqi_pm25_us_epa IS NOT NULL
         ORDER BY station, source, timestamp_utc DESC
     """
-    df = get_conn().query(query)
+    df = get_conn().query(query, ttl=0)
     df["source_label"] = df["source"].map(SOURCE_LABELS)
     return df
 
 
-@st.cache_data(ttl=600)
+# @st.cache_data(ttl=600)
 def get_latest_by_source(source: str) -> pd.DataFrame:
     """
     Latest AQI per station for a single source.
@@ -143,7 +143,7 @@ def get_latest_by_source(source: str) -> pd.DataFrame:
           AND aqi_pm25_us_epa IS NOT NULL
         ORDER BY station, measurement_time_ts DESC
     """
-    return get_conn().query(query)
+    return get_conn().query(query, ttl=0)
 
 
 # ─────────────────────────────────────────────
@@ -169,7 +169,7 @@ def get_history(station: str, source: str, hours: int = 48) -> pd.DataFrame:
           AND aqi_pm25_us_epa IS NOT NULL
         ORDER BY timestamp_utc ASC
     """
-    return get_conn().query(query)
+    return get_conn().query(query, ttl=600)
 
 
 @st.cache_data(ttl=600)
@@ -189,7 +189,7 @@ def get_history_multi_station(stations: list, source: str, hours: int = 48) -> p
           AND aqi_pm25_us_epa IS NOT NULL
         ORDER BY timestamp_utc ASC
     """
-    return get_conn().query(query)
+    return get_conn().query(query, ttl=600)
 
 
 @st.cache_data(ttl=600)
@@ -212,7 +212,7 @@ def get_hourly_city_avg(hours: int = 48) -> pd.DataFrame:
         GROUP BY date_trunc('hour', timestamp_utc)
         ORDER BY hour ASC
     """
-    return get_conn().query(query)
+    return get_conn().query(query, ttl=600)
 
 
 # ─────────────────────────────────────────────
@@ -243,7 +243,7 @@ def get_comparison_history(
           )
         ORDER BY timestamp_utc ASC
     """
-    df = get_conn().query(query)
+    df = get_conn().query(query, ttl=600)
     df["source_label"] = df["source"].map(SOURCE_LABELS)
     return df
 
@@ -264,7 +264,7 @@ def get_station_list(source: str) -> list:
         WHERE source = '{source}'
         ORDER BY station
     """
-    df = get_conn().query(query)
+    df = get_conn().query(query, ttl=3600)
     return df["station"].tolist()
 
 
@@ -277,7 +277,7 @@ def get_all_sources() -> list:
 # KPI QUERIES
 # ─────────────────────────────────────────────
 
-@st.cache_data(ttl=600)
+# @st.cache_data(ttl=600)
 def get_city_kpis() -> dict:
     """
     Summary KPIs for the Live Overview page.

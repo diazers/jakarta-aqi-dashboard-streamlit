@@ -524,3 +524,5 @@ with tab3:
 st.divider()
 st.caption("**AQI Scale (US EPA PM2.5):** 🟢 0-50 Good · 🟡 51-100 Moderate · 🟠 101-150 Unhealthy for Sensitive · 🔴 151-200 Unhealthy · 🟣 201-300 Very Unhealthy · ⚫ 300+ Hazardous")
 st.caption("All values normalized to US EPA PM2.5 AQI scale · Freshness filter removes stale stations from all calculations")
+
+

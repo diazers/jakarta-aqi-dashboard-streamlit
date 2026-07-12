@@ -526,3 +526,7 @@ st.caption("**AQI Scale (US EPA PM2.5):** 🟢 0-50 Good · 🟡 51-100 Moderate
 st.caption("All values normalized to US EPA PM2.5 AQI scale · Freshness filter removes stale stations from all calculations")
 
 
+st.write("bucket:", get_time_bucket(REFRESH_INTERVAL))
+raw_check = get_latest_all_sources()
+st.write("deployed uncached fetch — max measurement_time_ts:", raw_check["measurement_time_ts"].max())
+st.write("deployed uncached fetch — row count:", len(raw_check))
